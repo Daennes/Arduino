@@ -17,6 +17,8 @@ int latchPin_2 = 8;
 int clockPin_2 = 9;
 int dataPin_2 = 7;
 
+int zeichenKette[2];
+
 byte font[3][2] = {
 	{ 0x05, 0x02 },  
 	{ 0x02, 0x05 },  
@@ -115,49 +117,74 @@ void Zeichen(int zeichen, int start)
 	}
 }
 
-void Zeichen2(String zeichen, int start)
+void musterInit(String zeichen)
 {
 	Serial.println("Zeichenlange:");
 	Serial.println(zeichen.length());
 
-	byte zeichenKette[2];			//Anzahl Zeilen --> Zeilen
-	for (int j = 0; j < sizeof(zeichenKette); j++)
+
+	zeichenKette[0] = 0;
+	zeichenKette[1] = 0;					//Anzahl Zeilen --> Zeilen
+	for (int j = 0; j < 2; j++)
 	{
+		Serial.println("Durchgang: ");
 		for (int i = 0; i < zeichen.length(); i++)
 		{
-			switch (zeichen[i])
+			if (zeichen[i] == '0')
 			{
-			case '0':
-			{
-				zeichenKette[j] = zeichenKette[j] << i * 4 + font[0][j];
-				break;
+				if (i == 0)
+					zeichenKette[j] = font[0][j];
+				else {
+					zeichenKette[j] = zeichenKette[j] << 4;
+					zeichenKette[j] += font[0][j];
+				}
+
+				Serial.println(zeichenKette[j], BIN);
+				//break;
 			}
-			case '1':
+			else if (zeichen[i] == '1')
 			{
-				zeichenKette[j] = zeichenKette[j] << i * 4 + font[1][j];
-				break;
+				if (i == 0)
+					zeichenKette[j] = font[1][j];
+				else {
+					zeichenKette[j] = zeichenKette[j] << 4;
+					zeichenKette[j] += font[1][j];
+				}
+				Serial.println(zeichenKette[j], BIN);
+				//break;
 			}
-			case '2':
+			else if (zeichen[i] == '2')
 			{
-				zeichenKette[j] = zeichenKette[j] << i * 4 + font[2][j];
-				break;
+				if (i == 0)
+					zeichenKette[j] = font[2][j];
+				else {
+					zeichenKette[j] = zeichenKette[j] << 4;
+					zeichenKette[j] += font[2][j];
+				}
+				Serial.println(zeichenKette[j], BIN);
+				//break;
 			}
 
-			}
+
 		}
 	}
 
-	Serial.println("zeichenkette:");
-	Serial.println(zeichenKette[0], HEX);
-	Serial.println(zeichenKette[1], HEX);
+	Serial.println("zeichenkette1:");
+	Serial.println(zeichenKette[0], BIN);
+	Serial.println(zeichenKette[1], BIN);
+	Serial.println("zeichenkette1_ende:");
+
+}
 
 
+void Zeichen2(int start)
+{
 	byte tempZeichen;
-	for (int i = 0; i < sizeof(zeichenKette); i++)
+	for (int i = 0; i < 2; i++)
 	{
-		tempZeichen = zeichenKette[i] << start;
+		tempZeichen = zeichenKette[i] >> (8-start);
 
-		Serial.println(tempZeichen, HEX);
+		Serial.println(tempZeichen, BIN);
 
 		digitalWrite(latchPin, LOW);
 		shiftOut(dataPin, clockPin, LSBFIRST, (0x40 << i));
@@ -173,10 +200,11 @@ void Zeichen2(String zeichen, int start)
 
 void Lauflicht2()
 {
-	for (int i = 0; i < 8; i++)
+	musterInit("012");
+	for (int i = 0; i < 2*8; i++)
 	{
 		for(int k =0; k<100; k++)
-			Zeichen2("012", i);
+			Zeichen2(i);
 	}
 }
 
