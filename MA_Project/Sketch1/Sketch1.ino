@@ -4,12 +4,15 @@
  Author:	Dennis
 */
 
-
+//Zeilen: 8 Stück
 int latchPin = 12;
 int clockPin = 11;
 int dataPin = 13;
+
 byte leds = 0;
 byte leds_2 = 0;
+
+//Spalten: 16 Stück
 int currentLED = 6;
 int currentLED_2 = 3;
 
@@ -192,14 +195,14 @@ void musterInit(String zeichen)
 void Zeichen2(int start)
 {
 	byte tempZeichen;
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		tempZeichen = zeichenKette[i] >> (8-start);
 
 		Serial.println(tempZeichen, BIN);
 
 		digitalWrite(latchPin, LOW);
-		shiftOut(dataPin, clockPin, LSBFIRST, (0x40 << i));
+		shiftOut(dataPin, clockPin, LSBFIRST, (0x01 << i));
 		digitalWrite(latchPin, HIGH);
 
 		digitalWrite(latchPin_2, LOW);
@@ -210,9 +213,34 @@ void Zeichen2(int start)
 	}
 }
 
-void Lauflicht2()
+
+//1. 1byte um die länge nach rechts 2tes byte um länge und um 8 nach rechts. Beide loslaufen lassen
+//2. Warten bis erstes byte um 8 nach links verschoben wurde und dann zewites byte anfangen loslaufen zu lassen
+void Zeichen2_neu(int start)		//neu 9.3.17
 {
-	musterInit("012");
+	byte tempZeichen;
+	for (int i = 0; i < 8; i++)
+	{
+		tempZeichen = zeichenKette[i] >> (8 - start);
+
+		Serial.println(tempZeichen, BIN);
+
+		digitalWrite(latchPin, LOW);
+		shiftOut(dataPin, clockPin, LSBFIRST, (0x01 << i));
+		digitalWrite(latchPin, HIGH);
+
+		digitalWrite(latchPin_2, LOW);
+		shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen);
+		digitalWrite(latchPin_2, HIGH);
+
+		delay(10);
+	}
+}
+
+
+void Lauflicht2(String muster)
+{
+	musterInit(muster);
 	for (int i = 0; i < 2*8; i++)
 	{
 		for(int k =0; k<100; k++)
@@ -220,6 +248,7 @@ void Lauflicht2()
 	}
 }
 
+//neu 9.3.17
 //String max 4 Zeichen, da Int
 void musterInitZ(String zeichen)
 {
@@ -403,7 +432,7 @@ void loop() {
 
 	//TestLauflicht();
 
-	Lauflicht2();
+	Lauflicht2("0123");
 
 	/*leds = 0;
 
