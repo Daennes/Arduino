@@ -1,7 +1,7 @@
 /*
- Name:		Sketch1.ino
- Created:	20.02.2017 14:08:23
- Author:	Dennis
+Name:		Sketch1.ino
+Created:	20.02.2017 14:08:23
+Author:	Dennis
 */
 
 //Zeilen: 8 Stück
@@ -18,12 +18,19 @@ int latchPin_2 = 8;
 int clockPin_2 = 9;
 int dataPin_2 = 7;
 
+//buttons
+const int buttonPin_1 = 2;
+const int buttonPin_2 = 4;
+
 int zeichenKette[8];
 
+byte tempZeichen_1;
+byte tempZeichen_2;
+
 byte font[3][2] = {
-	{ 0x05, 0x02 },  
-	{ 0x02, 0x05 },  
-	{ 0x07, 0x04 }, 
+	{ 0x05, 0x02 },
+	{ 0x02, 0x05 },
+	{ 0x07, 0x04 },
 };
 byte fontZahlen[10][8] = {
 	{ 0x07, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x07 },		//0
@@ -48,6 +55,11 @@ void setup() {
 	pinMode(dataPin_2, OUTPUT);
 	pinMode(clockPin_2, OUTPUT);
 
+	pinMode(buttonPin_1, INPUT);
+	pinMode(buttonPin_2, INPUT);
+
+	Serial.begin(9600);
+
 }
 
 
@@ -56,15 +68,14 @@ void setup() {
 //2. Warten bis erstes byte um 8 nach links verschoben wurde und dann zewites byte anfangen loslaufen zu lassen
 void Zeichen2_neu(int start, int zeichenlength)		//neu 9.3.17
 {
-	byte tempZeichen_1;
-	byte tempZeichen_2;
+	
 	for (int i = 0; i < 8; i++)
 	{
-		tempZeichen_1 = zeichenKette[i] >> (zeichenlength*4 - start);
+		tempZeichen_1 = zeichenKette[i] >> (zeichenlength * 4 - start);
 		tempZeichen_2 = zeichenKette[i] >> (zeichenlength * 4 + 8 - start);
 
-		Serial.println(tempZeichen_1, BIN);
-		Serial.println(tempZeichen_2, BIN);
+		//Serial.println(tempZeichen_1, BIN);
+		//Serial.println(tempZeichen_2, BIN);
 
 		//Serial.println(tempZeichen, BIN);
 
@@ -73,11 +84,11 @@ void Zeichen2_neu(int start, int zeichenlength)		//neu 9.3.17
 		digitalWrite(latchPin, HIGH);
 
 		digitalWrite(latchPin_2, LOW);
-		shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_2);
 		shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_1);
+		shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_2);
 		digitalWrite(latchPin_2, HIGH);
 
-		delay(1);
+		//delay(1);
 	}
 }
 
@@ -86,10 +97,43 @@ void Lauflicht2(String muster)
 {
 	int zeichenlength = muster.length();
 	musterInitZ(muster);
-	for (int i = 0; i <(zeichenlength*4 + 2*8); i++)
+	for (int i = 0; i <(zeichenlength * 4 + 2 * 8); i++)
 	{
-		for(int k =0; k<100; k++)
+		for (int k = 0; k<100; k++)
 			Zeichen2_neu(i, zeichenlength);
+	}
+}
+
+void ButtonControl(String muster)
+{
+	int buttonState[] = { 0,0 };
+	int buttonState_old[] = { 0,0 };
+	int zeichenlength = muster.length();
+	int i = 0;
+	musterInitZ(muster);
+	Serial.println("hallochen");
+	while (true)
+	{
+		//Serial.println("lol");
+		buttonState[0] = digitalRead(buttonPin_1);
+		buttonState[1] = digitalRead(buttonPin_2);
+
+		if (buttonState[0] == HIGH && buttonState[0] != buttonState_old[0])
+		{
+			i++;
+			Serial.println(i);
+		}
+
+		if (buttonState[1] == HIGH && buttonState[1] != buttonState_old[1])
+		{
+			i--;
+			Serial.println(i);
+		}
+		Zeichen2_neu(i, zeichenlength);
+
+		buttonState_old[0] = buttonState[0];
+		buttonState_old[1] = buttonState[1];
+
 	}
 }
 
@@ -105,7 +149,7 @@ void musterInitZ(String zeichen)
 	{
 		zeichenKette[i] = 0;
 	}
-					//Anzahl Zeilen --> Zeilen
+	//Anzahl Zeilen --> Zeilen
 	for (int j = 0; j < 8; j++)
 	{
 		Serial.println("Durchgang: ");
@@ -250,16 +294,16 @@ void musterInitZ_test(String zeichen)
 		for (int i = 0; i < zeichen.length(); i++)
 		{
 
-				if (i == 0)
-					zeichenKette[j] = font[(int)zeichen[i]][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += font[(int)zeichen[i]][j];
-				}
+			if (i == 0)
+				zeichenKette[j] = font[(int)zeichen[i]][j];
+			else {
+				zeichenKette[j] = zeichenKette[j] << 4;
+				zeichenKette[j] += font[(int)zeichen[i]][j];
+			}
 
-				Serial.println(zeichenKette[j], BIN);
+			Serial.println(zeichenKette[j], BIN);
 
-			
+
 
 
 		}
@@ -275,7 +319,7 @@ void musterInitZ_test(String zeichen)
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-
-	Lauflicht2("0123");
+	Serial.println("Main");
+	ButtonControl("0123");
 
 }
