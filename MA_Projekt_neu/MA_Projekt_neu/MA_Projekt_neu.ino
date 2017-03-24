@@ -21,8 +21,10 @@ int dataPin_2 = 7;
 //buttons
 const int buttonPin_1 = 2;
 const int buttonPin_2 = 4;
+const int buttonPin_3 = 6;
+const int buttonPin_4 = 5;
 
-int zeichenKette[8];
+long zeichenKette[8*8];
 
 byte tempZeichen_1;
 byte tempZeichen_2;
@@ -58,6 +60,9 @@ void setup() {
 	pinMode(buttonPin_1, INPUT);
 	pinMode(buttonPin_2, INPUT);
 
+	pinMode(buttonPin_3, INPUT);
+	pinMode(buttonPin_4, INPUT);
+
 	Serial.begin(9600);
 
 }
@@ -66,13 +71,29 @@ void setup() {
 
 //1. 1byte um die länge nach rechts 2tes byte um länge und um 8 nach rechts. Beide loslaufen lassen
 //2. Warten bis erstes byte um 8 nach links verschoben wurde und dann zewites byte anfangen loslaufen zu lassen
-void Zeichen2_neu(int start, int zeichenlength)		//neu 9.3.17
+
+int start_old = 0;
+
+
+void Zeichen2_neu(int start, int height, int zeichenlength)		//neu 9.3.17
 {
-	
+	//Serial.println("Zeichnen:\n");
 	for (int i = 0; i < 8; i++)
 	{
-		tempZeichen_1 = zeichenKette[i] >> (zeichenlength * 4 - start);
-		tempZeichen_2 = zeichenKette[i] >> (zeichenlength * 4 + 8 - start);
+		//tempZeichen_1 = zeichenKette[i+height] >> (zeichenlength * 4 - start);
+		//tempZeichen_2 = zeichenKette[i+height] >> (zeichenlength * 4 + 8 - start);
+
+		tempZeichen_1 = zeichenKette[i+height] >> (8 * 4 -16 - start);
+		tempZeichen_2 = zeichenKette[i+height] >> (8 * 4 - 8 - start);
+
+		//tempZeichen_1 = zeichenKette[i + height] >> (start);
+		//tempZeichen_2 = zeichenKette[i + height] >> (8 - start);
+
+		/*if (start_old != start)
+		{
+			Serial.println(tempZeichen_1, BIN);
+			Serial.println(tempZeichen_2, BIN);
+		}*/
 
 		//Serial.println(tempZeichen_1, BIN);
 		//Serial.println(tempZeichen_2, BIN);
@@ -90,6 +111,7 @@ void Zeichen2_neu(int start, int zeichenlength)		//neu 9.3.17
 
 		//delay(1);
 	}
+	start_old = start;
 }
 
 
@@ -100,16 +122,17 @@ void Lauflicht2(String muster)
 	for (int i = 0; i <(zeichenlength * 4 + 2 * 8); i++)
 	{
 		for (int k = 0; k<100; k++)
-			Zeichen2_neu(i, zeichenlength);
+			Zeichen2_neu(i,0, zeichenlength);
 	}
 }
 
 void ButtonControl(String muster)
 {
-	int buttonState[] = { 0,0 };
-	int buttonState_old[] = { 0,0 };
+	int buttonState[] = { 0,0,0,0 };
+	int buttonState_old[] = { 0,0,0,0 };
 	int zeichenlength = muster.length();
 	int i = 0;
+	int height = 0;
 	musterInitZ(muster);
 	Serial.println("hallochen");
 	while (true)
@@ -117,22 +140,39 @@ void ButtonControl(String muster)
 		//Serial.println("lol");
 		buttonState[0] = digitalRead(buttonPin_1);
 		buttonState[1] = digitalRead(buttonPin_2);
+		buttonState[2] = digitalRead(buttonPin_3);
+		buttonState[3] = digitalRead(buttonPin_4);
 
-		if (buttonState[0] == HIGH && buttonState[0] != buttonState_old[0])
+		if (buttonState[0] == HIGH && buttonState[0] != buttonState_old[0] && i < 16)
 		{
 			i++;
 			Serial.println(i);
 		}
 
-		if (buttonState[1] == HIGH && buttonState[1] != buttonState_old[1])
+		if (buttonState[1] == HIGH && buttonState[1] != buttonState_old[1] && i>0)
 		{
 			i--;
 			Serial.println(i);
 		}
-		Zeichen2_neu(i, zeichenlength);
+
+		if (buttonState[2] == HIGH && buttonState[2] != buttonState_old[2] && height < 32)
+		{
+			height++;
+			Serial.println(height);
+		}
+
+		if (buttonState[3] == HIGH && buttonState[3] != buttonState_old[3] && height > 0)
+		{
+			height--;
+			Serial.println(height);
+		}
+
+		Zeichen2_neu(i, height, zeichenlength);
 
 		buttonState_old[0] = buttonState[0];
 		buttonState_old[1] = buttonState[1];
+		buttonState_old[2] = buttonState[2];
+		buttonState_old[3] = buttonState[3];
 
 	}
 }
@@ -145,135 +185,151 @@ void musterInitZ(String zeichen)
 	Serial.println("Zeichenlange:");
 	Serial.println(zeichen.length());
 
-	for (int i = 0; i < 8; i++)
+	int zeilen = 0;
+
+	for (int i = 0; i < 64; i++)
 	{
 		zeichenKette[i] = 0;
 	}
+
+	zeilen = zeichen.length() / 8;
+	if ((zeichen.length() % 8) > 0)
+		zeilen++;
+	if (zeilen > 8)
+		zeilen--;
+
+	Serial.println(zeilen);
+
 	//Anzahl Zeilen --> Zeilen
-	for (int j = 0; j < 8; j++)
+	for (int k = 0; k < zeilen; k++)
 	{
-		Serial.println("Durchgang: ");
-		for (int i = 0; i < zeichen.length(); i++)
+		for (int j = 0; j < 8; j++)
 		{
-			if (zeichen[i] == '0')
+			Serial.println("Durchgang: ");
+			for (int i = 0; i < 8; i++)
 			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[0][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[0][j];
-				}
+				if (zeichen[i+ k*8] == '0')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[0][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[0][j];
+					}
 
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '1')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[1][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[1][j];
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '2')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[2][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[2][j];
+				else if (zeichen[i + k * 8] == '1')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[1][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[1][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '3')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[3][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[3][j];
+				else if (zeichen[i + k * 8] == '2')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[2][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[2][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '4')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[4][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[4][j];
+				else if (zeichen[i + k * 8] == '3')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[3][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[3][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '5')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[5][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[5][j];
+				else if (zeichen[i + k * 8] == '4')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[4][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[4][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '6')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[6][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[6][j];
+				else if (zeichen[i + k * 8] == '5')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[5][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[5][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '7')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[7][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[7][j];
+				else if (zeichen[i + k * 8] == '6')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[6][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[6][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '8')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[8][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[8][j];
+				else if (zeichen[i + k * 8] == '7')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[7][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[7][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
-			else if (zeichen[i] == '9')
-			{
-				if (i == 0)
-					zeichenKette[j] = fontZahlen[9][j];
-				else {
-					zeichenKette[j] = zeichenKette[j] << 4;
-					zeichenKette[j] += fontZahlen[9][j];
+				else if (zeichen[i + k * 8] == '8')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[8][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[8][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
 				}
-				Serial.println(zeichenKette[j], BIN);
-				//break;
-			}
+				else if (zeichen[i + k * 8] == '9')
+				{
+					if (i == 0)
+						zeichenKette[j + k * 8] = fontZahlen[9][j];
+					else {
+						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
+						zeichenKette[j + k * 8] += fontZahlen[9][j];
+					}
+					Serial.println(zeichenKette[j + k * 8], BIN);
+					//break;
+				}
+				else
+					zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 
 
+			}
 		}
 	}
 
 	Serial.println("zeichenkette1:");
-	Serial.println(zeichenKette[0], BIN);
-	Serial.println(zeichenKette[1], BIN);
+	//Serial.println(zeichenKette[0], BIN);
+	Serial.println(zeichenKette[8], BIN);
 	Serial.println("zeichenkette1_ende:");
 
 }
@@ -310,8 +366,10 @@ void musterInitZ_test(String zeichen)
 	}
 
 	Serial.println("zeichenkette1:");
-	Serial.println(zeichenKette[0], BIN);
-	Serial.println(zeichenKette[1], BIN);
+	for(int j=0; j<16; j++)
+		Serial.println(zeichenKette[j], BIN);
+	//Serial.println(zeichenKette[1], BIN);
+
 	Serial.println("zeichenkette1_ende:");
 
 }
@@ -320,6 +378,6 @@ void musterInitZ_test(String zeichen)
 // the loop function runs over and over again until power down or reset
 void loop() {
 	Serial.println("Main");
-	ButtonControl("0123");
+	ButtonControl("01234567");
 
 }
