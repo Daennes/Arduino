@@ -10,29 +10,32 @@ Author:	Dennis
 char incomingData;
 
 //Zeilen: 8 Stück
-int latchPin = 12;
-int clockPin = 11;
-int dataPin = 13;
+int latchPin = 9;
+int clockPin = 10;
+int dataPin = 8;
 
 
 //Spalten: 16 Stück
 int currentLED = 6;
 int currentLED_2 = 3;
 
-int latchPin_2 = 8;
-int clockPin_2 = 9;
-int dataPin_2 = 7;
+//Spalten
+int latchPin_2 = 12;
+int clockPin_2 = 13;
+int dataPin_2 = 11;
 
 //buttons
-const int buttonPin_1 = 2;
+const int buttonPin_1 = 3;
 const int buttonPin_2 = 4;
-const int buttonPin_3 = 6;
+const int buttonPin_3 = 2;
 const int buttonPin_4 = 5;
 
 long zeichenKette[8 * 8];
 
 byte tempZeichen_1;
 byte tempZeichen_2;
+
+String program = "paint";
 
 byte font[3][2] = {
 	{ 0x05, 0x02 },
@@ -57,12 +60,12 @@ byte fontZahlen[11][8] = {
 	{ 0x00, 0x01, 0x03, 0x05, 0x01, 0x01, 0x01, 0x01 },		//1
 	{ 0x00, 0x07, 0x01, 0x01, 0x07, 0x04, 0x04, 0x07 },		//2
 	{ 0x00, 0x07, 0x01, 0x01, 0x07, 0x01, 0x01, 0x07 },		//3
-	{ 0x00, 0x05, 0x07, 0x05, 0x01, 0x01, 0x01, 0x01 },		//4
+	{ 0x00, 0x05, 0x05, 0x07, 0x01, 0x01, 0x01, 0x01 },		//4
 	{ 0x00, 0x07, 0x04, 0x04, 0x07, 0x01, 0x01, 0x07 },		//5
 	{ 0x00, 0x07, 0x04, 0x04, 0x07, 0x05, 0x05, 0x07 },		//6
 	{ 0x00, 0x07, 0x01, 0x01, 0x07, 0x01, 0x01, 0x01 },		//7
 	{ 0x00, 0x07, 0x05, 0x05, 0x07, 0x05, 0x05, 0x07 },		//8
-	{ 0x00, 0x07, 0x07, 0x05, 0x01, 0x01, 0x01, 0x07 },		//9
+	{ 0x00, 0x07, 0x05, 0x07, 0x01, 0x01, 0x01, 0x07 },		//9
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },		//leer
 };
 
@@ -84,6 +87,9 @@ void setup() {
 
 	Serial.begin(9600);
 
+
+	musterInitPicture("X..XX..XX..XX..X");
+
 }
 
 
@@ -93,10 +99,11 @@ void setup() {
 
 int start_old = 0;
 
-																//int zeichenlength ist überflüssig kann raus
+int h = 1;															//int zeichenlength ist überflüssig kann raus
 void Zeichen2_neu(int start, int height, int zeichenlength)		//neu 9.3.17
 {
 	//Serial.println("Zeichnen:\n");
+	
 	for (int i = 0; i < 8; i++)
 	{
 		//tempZeichen_1 = zeichenKette[i+height] >> (zeichenlength * 4 - start);
@@ -104,6 +111,16 @@ void Zeichen2_neu(int start, int height, int zeichenlength)		//neu 9.3.17
 
 		tempZeichen_1 = zeichenKette[7-i + height] >> (8 * 4 - 16 - start);
 		tempZeichen_2 = zeichenKette[7-i + height] >> (8 * 4 - 8 - start);
+
+		//tempZeichen_1 = zeichenKette[0] >> 16;
+		//tempZeichen_2 = zeichenKette[0] >> 24;
+
+
+
+		//Serial.println(tempZeichen_1, BIN);
+		//Serial.println(tempZeichen_1, BIN);
+
+		delay(2);
 
 		//tempZeichen_1 = zeichenKette[i + height] >> (start);
 		//tempZeichen_2 = zeichenKette[i + height] >> (8 - start);
@@ -119,17 +136,30 @@ void Zeichen2_neu(int start, int height, int zeichenlength)		//neu 9.3.17
 
 		//Serial.println(tempZeichen, BIN);
 
-		digitalWrite(latchPin, LOW);
-		shiftOut(dataPin, clockPin, LSBFIRST, (0x01 << 7-i));
-		digitalWrite(latchPin, HIGH);
+		/*if (h == 1)
+		{
+			//Serial.println(0x1 << 7 - i, BIN);
+			Serial.println(tempZeichen_1, BIN);
+			Serial.println(tempZeichen_1, BIN);
+		}*/
 
-		digitalWrite(latchPin_2, LOW);
-		shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_1);
-		shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_2);
-		digitalWrite(latchPin_2, HIGH);
+		if (true)
+		{
+			digitalWrite(latchPin, LOW);
+			shiftOut(dataPin, clockPin, LSBFIRST, (0x01 << 7-i));
+			digitalWrite(latchPin, HIGH);
+			//digitalWrite(latchPin, LOW);
+
+			digitalWrite(latchPin_2, LOW);
+			shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_1);
+			shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_2);
+			digitalWrite(latchPin_2, HIGH);
+		}
+		//digitalWrite(latchPin_2, LOW);
 
 		//delay(10);
 	}
+	h = 2;
 	start_old = start;
 }
 
@@ -163,12 +193,22 @@ void ButtonControl(String muster)
 			if (Serial.available() > 0)
 			{
 				str = Serial.readStringUntil('\n');
+
+				
 			}
 			//incomingData = Serial.read();
 
 			// say what you got:
 			Serial.print("I received: ");
 			Serial.println(str);
+
+			if (str[0] == 'c' && str[1] == 'p')
+			{
+				Serial.println("break button");
+				program = "paint";
+				break;
+			}
+
 			musterInitZ(str);
 		}
 
@@ -181,24 +221,28 @@ void ButtonControl(String muster)
 
 		if (buttonState[0] == HIGH && buttonState[0] != buttonState_old[0] && i < 16)
 		{
+			Serial.println("button 1");
 			i++;
 			Serial.println(i);
 		}
 
 		if (buttonState[1] == HIGH && buttonState[1] != buttonState_old[1] && i>0)
 		{
+			Serial.println("button 2");
 			i--;
 			Serial.println(i);
 		}
 
 		if (buttonState[2] == HIGH && buttonState[2] != buttonState_old[2] && height < 32)
 		{
+			Serial.println("button 3");
 			height++;
 			Serial.println(height);
 		}
 
 		if (buttonState[3] == HIGH && buttonState[3] != buttonState_old[3] && height > 0)
 		{
+			Serial.println("button 4");
 			height--;
 			Serial.println(height);
 		}
@@ -236,20 +280,27 @@ void Paint(String muster)
 			// read the incoming byte:
 			if (Serial.available() > 0)
 			{
-				test[0] = str = Serial.readStringUntil(',');
-				test[1] = Serial.readStringUntil(',');
+				str = Serial.readStringUntil(',');
+				//test[1] = Serial.readStringUntil(',');
 			}
 			//incomingData = Serial.read();
 
-			Serial.println("1: ");
+			/*Serial.println("1: ");
 			Serial.println(test[0]);
 			Serial.println("2: ");
-			Serial.println(test[1]);
+			Serial.println(test[1]);*/
 
 
 			// say what you got:
 			Serial.println("I received: ");
 			Serial.println(str);
+
+			if (str == "cp")
+			{
+				Serial.println("break button");
+				program = "button";
+				break;
+			}
 
 			for (int k = 0; k < str.length(); k++)
 			{
@@ -285,24 +336,28 @@ void Paint(String muster)
 
 		if (buttonState[0] == HIGH && buttonState[0] != buttonState_old[0] && i < 16)
 		{
+			Serial.println(buttonPin_1);
 			i++;
 			Serial.println(i);
 		}
 
 		if (buttonState[1] == HIGH && buttonState[1] != buttonState_old[1] && i>0)
 		{
+			Serial.println(buttonPin_2);
 			i--;
 			Serial.println(i);
 		}
 
 		if (buttonState[2] == HIGH && buttonState[2] != buttonState_old[2] && height < 32)
 		{
+			Serial.println(buttonPin_3);
 			height++;
 			Serial.println(height);
 		}
 
 		if (buttonState[3] == HIGH && buttonState[3] != buttonState_old[3] && height > 0)
 		{
+			Serial.println(buttonPin_4);
 			height--;
 			Serial.println(height);
 		}
@@ -346,7 +401,7 @@ void musterInitZ(String zeichen)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			Serial.println("Durchgang: ");
+			//Serial.println("Durchgang: ");
 			for (int i = 0; i < 8; i++)
 			{
 				if (zeichen[i + k * 8] == '0')
@@ -358,7 +413,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] += fontZahlen[0][j];
 					}
 
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '1')
@@ -369,7 +424,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[1][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '2')
@@ -380,7 +435,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[2][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '3')
@@ -391,7 +446,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[3][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '4')
@@ -402,7 +457,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[4][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '5')
@@ -413,7 +468,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[5][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '6')
@@ -424,7 +479,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[6][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '7')
@@ -435,7 +490,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[7][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '8')
@@ -446,7 +501,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[8][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == '9')
@@ -457,7 +512,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[9][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else if (zeichen[i + k * 8] == ' ')
@@ -468,7 +523,7 @@ void musterInitZ(String zeichen)
 						zeichenKette[j + k * 8] = zeichenKette[j + k * 8] << 4;
 						zeichenKette[j + k * 8] += fontZahlen[10][j];
 					}
-					Serial.println(zeichenKette[j + k * 8], BIN);
+					//Serial.println(zeichenKette[j + k * 8], BIN);
 					//break;
 				}
 				else
@@ -480,8 +535,10 @@ void musterInitZ(String zeichen)
 	}
 
 	Serial.println("zeichenkette1:");
+	for(int l =0; l<8; l++)
+		Serial.println(zeichenKette[l], BIN);
 	//Serial.println(zeichenKette[0], BIN);
-	Serial.println(zeichenKette[8], BIN);
+	//Serial.println(zeichenKette[8], BIN);
 	Serial.println("zeichenkette1_ende:");
 
 }
@@ -510,7 +567,7 @@ void musterInitPicture(String zeichen)
 	//Anzahl Zeilen --> Zeilen
 	for (int k = 0; k < zeilen; k++)
 	{
-		Serial.println("Durchgang: ");
+		//Serial.println("Durchgang: ");
 		for (int i = 0; i < 32; i++)
 		{
 			if (zeichen[i + k * 32] == 'X')
@@ -552,8 +609,8 @@ void musterInitPicture(String zeichen)
 	}
 
 	Serial.println("zeichenkette1:");
-	//Serial.println(zeichenKette[0], BIN);
-	Serial.println(zeichenKette[8], BIN);
+	for (int l = 0; l<8; l++)
+		Serial.println(zeichenKette[l], BIN);
 	Serial.println("zeichenkette1_ende:");
 
 }
@@ -600,11 +657,118 @@ void musterInitZ_test(String zeichen)
 
 }
 
-
+int i = 0;
 // the loop function runs over and over again until power down or reset
 void loop() {
 	//File  file;
 	//file.open("C:\ArduinoProjekt\test.txt");
 	//ButtonControl("01234");
-	Paint(".");
+	//.println("main");
+	if(program == "paint")
+		Paint("X..XX..XX..XX..XX..XX..XX..XX..X.................................X..XX..XX..XX..XX..XX..XX.XX..X");
+	else if(program == "button")
+		ButtonControl("01234");
+	/*if (i == 8)
+		i = 0;*/
+
+	//tempZeichen_1 = zeichenKette[0] >> 16;
+	//tempZeichen_2 = zeichenKette[0] >> 24;
+
+	while (false)
+	{
+		/*if (i == 8)
+		{
+
+			for (int j = 0; j < 8; j++)
+			{
+				digitalWrite(dataPin, LOW);
+				digitalWrite(clockPin, HIGH);
+				digitalWrite(clockPin, LOW);
+			}
+			digitalWrite(latchPin, HIGH);
+			digitalWrite(latchPin, LOW);
+
+			for (int j = 0; j < 16; j++)
+			{
+				digitalWrite(dataPin_2, LOW);
+				digitalWrite(clockPin_2, HIGH);
+				digitalWrite(clockPin_2, LOW);
+			}
+			digitalWrite(latchPin_2, HIGH);
+			digitalWrite(latchPin_2, LOW);
+
+			i = 0;
+		}
+
+		if (i == 0)
+		{
+			digitalWrite(dataPin, HIGH);
+			digitalWrite(clockPin, HIGH);
+			digitalWrite(clockPin, LOW);
+			digitalWrite(latchPin, HIGH);
+			digitalWrite(latchPin, LOW);
+
+			digitalWrite(dataPin_2, HIGH);
+			digitalWrite(clockPin_2, HIGH);
+			digitalWrite(clockPin_2, LOW);
+			digitalWrite(latchPin_2, HIGH);
+			digitalWrite(latchPin_2, LOW);
+		}
+
+		digitalWrite(dataPin, LOW);
+		digitalWrite(clockPin, HIGH);
+		digitalWrite(clockPin, LOW);
+		digitalWrite(latchPin, HIGH);
+		digitalWrite(latchPin, LOW);
+
+		digitalWrite(dataPin_2, LOW);
+		digitalWrite(clockPin_2, HIGH);
+		digitalWrite(clockPin_2, LOW);
+		digitalWrite(latchPin_2, HIGH);
+		digitalWrite(latchPin_2, LOW);*/
+
+		if (i == 8)
+			i = 0;
+
+		if (i == 0)
+		{
+			tempZeichen_1 = 0x0;
+			tempZeichen_1 = 0x11;
+		}
+
+		//tempZeichen_1 = zeichenKette[i] >> 16;
+		//tempZeichen_2 = zeichenKette[i] >> 24;
+
+		tempZeichen_1 = tempZeichen_1 << i;
+
+		/*if (i % 2 == 0)
+		{
+			tempZeichen_1 = tempZeichen_2 = 0x55;
+		}
+		else
+			tempZeichen_1 = tempZeichen_2 = 0x80;
+
+		//tempZeichen_1 = tempZeichen_2 = 0x55;*/
+		if (true)
+		{
+			digitalWrite(latchPin, LOW);
+			shiftOut(dataPin, clockPin, LSBFIRST, (0x1 << i));
+			digitalWrite(latchPin, HIGH);
+			//digitalWrite(latchPin, LOW);
+
+			digitalWrite(latchPin_2, LOW);
+			shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_1);
+			shiftOut(dataPin_2, clockPin_2, LSBFIRST, tempZeichen_1);
+			digitalWrite(latchPin_2, HIGH);
+		}
+
+
+
+
+
+		delay(50);
+
+		i++;
+	}
+
 }

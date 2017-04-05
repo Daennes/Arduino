@@ -5,6 +5,10 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MA_Project_neu2", "MA_Project_neu2\MA_Project_neu2.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shiftoutTest", "..\..\..\..\Documents\Arduino\shiftoutTest\shiftoutTest.vcxproj", "{F5D87285-03BD-4094-BCF1-4E0597A6D7C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LED2", "..\..\..\..\Documents\Arduino\LED2\LED2.vcxproj", "{B2127FAD-4BC3-40E4-90E0-846324D4B414}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -15,6 +19,14 @@ Global
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{F5D87285-03BD-4094-BCF1-4E0597A6D7C3}.Debug|x86.ActiveCfg = Debug|Win32
+		{F5D87285-03BD-4094-BCF1-4E0597A6D7C3}.Debug|x86.Build.0 = Debug|Win32
+		{F5D87285-03BD-4094-BCF1-4E0597A6D7C3}.Release|x86.ActiveCfg = Release|Win32
+		{F5D87285-03BD-4094-BCF1-4E0597A6D7C3}.Release|x86.Build.0 = Release|Win32
+		{B2127FAD-4BC3-40E4-90E0-846324D4B414}.Debug|x86.ActiveCfg = Debug|Win32
+		{B2127FAD-4BC3-40E4-90E0-846324D4B414}.Debug|x86.Build.0 = Debug|Win32
+		{B2127FAD-4BC3-40E4-90E0-846324D4B414}.Release|x86.ActiveCfg = Release|Win32
+		{B2127FAD-4BC3-40E4-90E0-846324D4B414}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
